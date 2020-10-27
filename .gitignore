@@ -130,3 +130,5 @@ local.settings.json
 .python_packages
 .DS_Store
 post-here/model.onnx
+
+.vscode
