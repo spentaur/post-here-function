@@ -30,6 +30,7 @@ plugins:
 
 custom:
   pythonRequirements:
+    dockerizePip: true
     slim: true
     strip: false
     useStaticCache: true
