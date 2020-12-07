@@ -1,3 +1,4 @@
 onnxruntime
 transformers
 boto3
+numpy

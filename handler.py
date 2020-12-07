@@ -1,7 +1,7 @@
 import json
 from transformers import AutoTokenizer
 from onnxruntime import InferenceSession
-import heapq
+import numpy as np
 from boto3 import client
 
 
@@ -9,8 +9,8 @@ s3 = client('s3')
 s3_bucket = "post-here"
 file_prefix = "model-optimized.onnx"
 
-with open("./labels.json", "r") as f:
-    labels = json.load(f)
+labels = np.loadtxt(
+    '/content/drive/MyDrive/reddit/11-17-2020/labels.txt', dtype='str')
 
 tokenizer = AutoTokenizer.from_pretrained("./model", use_fast=True)
 obj = s3.get_object(Bucket=s3_bucket, Key=file_prefix)
@@ -31,25 +31,25 @@ def predict(event, contenxt):
                 },
                 "body": json.dumps("Please include text.")
             }
+
         text = body['text']
+
         if 'k' in body:
             k = body['k']
         else:
-            k = 16
-        inputs = tokenizer(text, padding=True, truncation=True,
-                           return_tensors="np")
+            k = 24
+
+        inputs = tokenizer(
+            text,
+            return_tensors="np",
+            max_length=512,
+            padding=True,
+            truncation=True
+        )
         inputs = {onnx_input.name: inputs[onnx_input.name]
                   for onnx_input in model_onnx.get_inputs()}
         preds = model_onnx.run(None, inputs)[0]
-        top_k = [
-            heapq.nlargest(
-                k,
-                range(
-                    len(pred)),
-                pred.__getitem__) for pred in preds]
-        preds_labels = [[labels[str(pred)]
-                         for pred in top_n if pred] for top_n in top_k]
-
+        ind = preds.argsort()[:, ::-1][:, :k]
         return {
             "statusCode": 200,
             "headers": {
@@ -58,7 +58,7 @@ def predict(event, contenxt):
                 "Access-Control-Allow-Credentials": True
 
             },
-            "body": json.dumps(preds_labels)
+            "body": json.dumps(labels[ind].tolist())
         }
     except Exception as e:
         return {
