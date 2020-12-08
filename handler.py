@@ -9,8 +9,7 @@ s3 = client('s3')
 s3_bucket = "post-here"
 file_prefix = "model-optimized.onnx"
 
-labels = np.loadtxt(
-    '/content/drive/MyDrive/reddit/11-17-2020/labels.txt', dtype='str')
+labels = np.loadtxt('./labels.txt', dtype='str')
 
 tokenizer = AutoTokenizer.from_pretrained("./model", use_fast=True)
 obj = s3.get_object(Bucket=s3_bucket, Key=file_prefix)
